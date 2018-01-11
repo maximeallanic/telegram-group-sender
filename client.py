@@ -1,7 +1,6 @@
 from telethon import TelegramClient
 from telethon.tl.functions.channels import GetFullChannelRequest
-from telethon.errors.rpc_error_list import PeerFloodError, FloodWaitError
-
+from telethon.errors.rpc_error_list import PeerFloodError, FloodWaitError, PeerIdInvalidError
 from telethon.tl.functions.messages import SendMessageRequest
 from telethon.tl.types import InputChannel, PeerChannel, ChannelParticipantsSearch, InputPeerUser
 
@@ -28,44 +27,49 @@ class Clients():
         while True:
             pos = random.randrange(0, len(self.clients), 1)
             client = self.clients[pos]
-            if client.is_available():
-                return client
+            return client
 
-    def send_message(self, id, message):
+    def send_message(self, participant, message):
         client = self.get_client()
-        client.send_message(id, message)
+        client.send_message(participant, message)
 
-    def send_messages(self, id, messages, tempo):
+    def send_messages(self, participant, messages, tempo):
         client = self.get_client()
         try:
-            client.send_messages(id, messages, tempo)
+            client.send_messages(participant, messages, tempo)
         except FloodWaitError:
-            print(client.phone, 'is temporary unusable')
+            print(client.phone, client.api_id, 'is temporary unusable')
             client.disconnect()
-            self.send_messages(id, messages, tempo)
+            self.send_messages(participant, messages, tempo)
         except PeerFloodError:
-            print(client.phone, 'is disable')
+            print(client.phone, client.api_id, 'is disable')
             client.disconnect()
-            self.send_messages(id, messages, tempo)
+            self.send_messages(participant, messages, tempo)
+        except PeerIdInvalidError:
+            print(client.phone, client.api_id, 'is peer id invalid')
+            client.disconnect()
+            self.send_messages(participant, messages, tempo)
         except:
+            print(client.phone, client.api_id, sys.exc_info()[0].message)
             client.disconnect()
-            self.send_messages(id, messages, tempo)
+            self.send_messages(participant, messages, tempo)
 
 class Client():
     def __init__(self, phone, api_id, api_hash):
         self.phone = phone
+        self.api_id = api_id
         self.available = True
         self.client = TelegramClient(phone, api_id, api_hash)
         self.client.connect()
         if not self.client.is_user_authorized():
             self.client.send_code_request(phone)
-            self.client.sign_in(phone, input('Enter the code: '))  # Put whatever code you received here.
+            self.client.sign_in(phone, input('Enter the code: '))
         self.client.disconnect()
 
-    def send_message(self, id, message):
+    def send_message(self, participant, message):
         try:
             self.client.connect()
-            self.client.send_message(id, message)
+            self.client.send_message(participant.id, message)
             self.client.disconnect()
         except FloodWaitError:
             self.available = False
@@ -74,11 +78,12 @@ class Client():
         except:
             self.client.disconnect()
 
-    def send_messages(self, id, messages, tempo):
+    def send_messages(self, participant, messages, tempo):
         self.client.connect()
         for message in messages:
-            self.client.send_message(id, message)
-            time.sleep(tempo or 0)
+            self.client.invoke(SendMessageRequest(self.client.get_input_entity(participant), message))
+            #self.client.send_message(participant.id, message)
+            time.sleep(tempo)
         self.client.disconnect()
 
     def connect(self):

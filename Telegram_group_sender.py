@@ -42,7 +42,7 @@ while True:
         channels.append(client.get_entity(channel))
 
 offset = 0
-limit = 100
+limit = 200
 all_participants = []
 
 for channel in channels:
@@ -56,7 +56,7 @@ for channel in channels:
         offset += len(participants.users)
 
 # Reduce list of participant (remove double)
-all_participants = list(set(all_participants))
+# all_participants = list(set(all_participants))
 
 print('Number of participants:', len(all_participants))
 
@@ -72,5 +72,5 @@ client.disconnect()
 
 # Send whole messages to all participants
 for index, participant in enumerate(all_participants):
-    print('Send messages to', participant.username or participant.id, 'there are', len(all_participants) - index, 'participant left')
-    clients.send_messages(participant.id, messages, 20)
+    print('Send messages to', participant.username or participant.id, 'there are', len(all_participants) - index, 'participants left')
+    clients.send_messages(participant, messages, 20)
