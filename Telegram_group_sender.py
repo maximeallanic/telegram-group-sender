@@ -41,16 +41,17 @@ while True:
     else:
         channels.append(client.get_entity(channel))
 
-offset = 0
+
 limit = 200
 all_participants = []
 
 for channel in channels:
+    offset = 0
     while True:
         participants = client.invoke(GetParticipantsRequest(
             channel, ChannelParticipantsSearch(''), offset, limit, hash=0
         ))
-        if not participants.users:
+        if len(participants.users) == 0:
             break
         all_participants.extend(participants.users)
         offset += len(participants.users)
