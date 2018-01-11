@@ -1,84 +1,45 @@
-from telethon import TelegramClient
-from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.channels import GetParticipantsRequest
-from telethon.tl.functions.messages import SendMessageRequest
-from telethon.tl.types import InputChannel, PeerChannel, ChannelParticipantsSearch, InputPeerUser
-import time
-import random
-import sys
+from telethon.tl.types import ChannelParticipantsSearch
+
+import client
 
 
 # These example values won't work. You must get your own api_id and
 # api_hash from https://my.telegram.org, under API Development.
-api_id = 119353
-api_hash = '70dd4c13d170a21233675e04f07a5fc3'
-
-class Clients():
-    clients = []
-    def add(self, client):
-        self.clients.append(client)
-
-    def get_client(self):
-        while True:
-            pos = random.randrange(0, len(self.clients), 1)
-            client = self.clients[pos]
-            if client.is_available()
-                return client
-
-    def send_message(self, id, message):
-        client = self.get_client()
-        client.send_message(id, message)
-
-    def send_messages(self, id, messages, tempo):
-        client = self.get_client()
-        for message in messages:
-            client.send_message(id, message)
-            time.sleep(tempo or 0)
+#api_id = 119353
+#api_hash = '70dd4c13d170a21233675e04f07a5fc3'
 
 
+clients = client.Clients()
 
-class Client(phone):
-    def __init__(self):
-        self.available = True
-        self.client = TelegramClient(phone, api_id, api_hash)
-        self.client.connect()
-        if not self.client.is_user_authorized():
-            self.client.send_code_request(phone)
-            self.client.sign_in(phone, input('Enter the code: '))  # Put whatever code you received here.
-        self.client.disconnect()
-    def send_message(self, id, message):
-        try:
-            self.client.connect()
-            self.client.send_message(id, message)
-            self.client.disconnect()
-        except FloodWaitError:
-            self.available = False
-        except PeerFloodError:
-            self.available = False
-        except:
-            self.client.disconnect()
-    def is_available(self):
-        return self.available
+# Get api key
+while True:
+    api_id = input('Enter your Api Id: ')
+    if api_id.strip() == '':
+        break
+    else:
+        api_hash = input('Enter your Api Hash: ')
+        clients.addApi(api_id, api_hash)
 
-clients = Clients()
-
+# Get telegram account
 while True:
     phone = input('Enter your phone: ')
     if phone.strip() == '':
         break
     else:
-        client = Client(phone)
-        clients.add(client)
+        clients.addAccount(phone)
 
 
+# Get channels
 channels = []
-client = clients.getClient()
+client = clients.get_client()
+client.connect()
 while True:
-    group = input('Enter group name: ')
-    if group.strip() == '':
+    channel = input('Enter channel name: ')
+    if channel.strip() == '':
         break
     else:
-        channels.append(client.get_entity(group))
+        channels.append(client.get_entity(channel))
 
 offset = 0
 limit = 100
@@ -93,10 +54,13 @@ for channel in channels:
             break
         all_participants.extend(participants.users)
         offset += len(participants.users)
-        # sleep(1)  # This line seems to be optional, no guarantees
+
+# Reduce list of participant (remove double)
 all_participants = list(set(all_participants))
+
 print('Number of participants:', len(all_participants))
 
+# get messages
 messages = []
 while True:
     message = input('Enter your message: ')
@@ -106,26 +70,7 @@ while True:
         messages.append(message)
 client.disconnect()
 
-def sendMessage(userId, message):
-    client = getClient()
-    try:
-        client.send_message(userId, message)
-        client.disconnect()
-    except:
-        print('Error with', sys.exc_info()[0])
-        client.disconnect()
-        sendMessage(userId, message)
-
-for participant in all_participants:
-    for message in messages:
-        sendMessage(participant.id, message)
-        time.sleep(20)
-
-#toChannel = client.get_entity(input('Enter group name to add members: '))
-
-#for participant in all_participants:
-#    client(AddChatUserRequest(
-#        toChannel,
-#        participant.id,
-#        fwd_limit=10  # allow the user to see the 10 last messages
-#    ))
+# Send whole messages to all participants
+for index, participant in enumerate(all_participants):
+    print('Send messages to', participant.username or participant.id, 'there are', len(all_participants) - index, 'participant left')
+    clients.send_messages(participant.id, messages, 20)
