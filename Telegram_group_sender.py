@@ -7,38 +7,72 @@ import time
 import random
 import sys
 
+
 # These example values won't work. You must get your own api_id and
 # api_hash from https://my.telegram.org, under API Development.
 api_id = 119353
 api_hash = '70dd4c13d170a21233675e04f07a5fc3'
 
-clients = []
+class Clients():
+    clients = []
+    def add(self, client):
+        self.clients.append(client)
 
-def getClient():
-    pos = random.randrange(0, len(clients), 1)
-    client = clients[pos]
-    client.connect()
-    return client
+    def get_client(self):
+        while True:
+            pos = random.randrange(0, len(self.clients), 1)
+            client = self.clients[pos]
+            if client.is_available()
+                return client
+
+    def send_message(self, id, message):
+        client = self.get_client()
+        client.send_message(id, message)
+
+    def send_messages(self, id, messages, tempo):
+        client = self.get_client()
+        for message in messages:
+            client.send_message(id, message)
+            time.sleep(tempo or 0)
+
+
+
+class Client(phone):
+    def __init__(self):
+        self.available = True
+        self.client = TelegramClient(phone, api_id, api_hash)
+        self.client.connect()
+        if not self.client.is_user_authorized():
+            self.client.send_code_request(phone)
+            self.client.sign_in(phone, input('Enter the code: '))  # Put whatever code you received here.
+        self.client.disconnect()
+    def send_message(self, id, message):
+        try:
+            self.client.connect()
+            self.client.send_message(id, message)
+            self.client.disconnect()
+        except FloodWaitError:
+            self.available = False
+        except PeerFloodError:
+            self.available = False
+        except:
+            self.client.disconnect()
+    def is_available(self):
+        return self.available
+
+clients = Clients()
 
 while True:
     phone = input('Enter your phone: ')
     if phone.strip() == '':
         break
     else:
-        try:
-            client = TelegramClient(phone, api_id, api_hash)
-            client.connect()
-            if not client.is_user_authorized():
-                client.send_code_request(phone)
-                client.sign_in(phone, input('Enter the code: '))  # Put whatever code you received here.
-            client.disconnect()
-            clients.append(client)
-        except:
-            break
+        client = Client(phone)
+        clients.add(client)
 
 
 channels = []
-client = getClient()
+client = clients.getClient()
 while True:
     group = input('Enter group name: ')
     if group.strip() == '':
