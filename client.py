@@ -10,17 +10,10 @@ import sys
 
 class Clients():
     clients = []
-    apis = []
 
-    def addApi(self, api_id, api_hash):
-        self.apis.append({
-            'id': api_id,
-            'hash': api_hash
-        })
-
-    def addAccount(self, phone):
+    def add_account(self, phone, api_id, api_hash):
         for api in self.apis:
-            client = Client(phone, api['id'], api['hash'])
+            client = Client(phone, api_id, api_hash)
             self.clients.append(client)
 
     def get_client(self):

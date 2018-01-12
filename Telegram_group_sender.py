@@ -12,22 +12,15 @@ import client
 
 clients = client.Clients()
 
-# Get api key
-while True:
-    api_id = input('Enter your Api Id: ')
-    if api_id.strip() == '':
-        break
-    else:
-        api_hash = input('Enter your Api Hash: ')
-        clients.addApi(api_id, api_hash)
-
 # Get telegram account
 while True:
     phone = input('Enter your phone: ')
     if phone.strip() == '':
         break
     else:
-        clients.addAccount(phone)
+        api_id = input('Enter your Api Id: ')
+        api_hash = input('Enter your Api Hash: ')
+        clients.add_account(phone, api_id, api_hash)
 
 
 # Get channels
